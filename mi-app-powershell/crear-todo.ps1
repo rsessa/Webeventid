@@ -135,9 +135,11 @@ function Create-WebInterface {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(45deg, #2c3e50, #3498db); color: white; padding: 30px; text-align: center; }
+        .header { background: linear-gradient(45deg, #2c3e50, #3498db); color: white; padding: 30px; text-align: center; position: relative; }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { font-size: 1.2em; opacity: 0.9; }
+        .theme-toggle { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 25px; cursor: pointer; font-size: 14px; transition: all 0.3s; backdrop-filter: blur(10px); }
+        .theme-toggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
         .search-section { padding: 30px; background: #f8f9fa; }
         .search-container { display: flex; gap: 20px; margin-bottom: 20px; }
         .search-input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
@@ -174,11 +176,68 @@ function Create-WebInterface {
         .filter-select { padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; }
         .results-count { margin-bottom: 15px; color: #666; font-style: italic; }
         @media (max-width: 768px) { .search-container { flex-direction: column; } .search-buttons { justify-content: center; } .stats { flex-direction: column; align-items: center; } .filters { flex-direction: column; } }
+        
+        /* MODO OSCURO */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --container-bg: #2d3748;
+            --header-gradient: linear-gradient(45deg, #1a202c, #2d3748);
+            --search-bg: #4a5568;
+            --input-bg: #2d3748;
+            --input-border: #4a5568;
+            --input-border-focus: #63b3ed;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --card-bg: #2d3748;
+            --card-border: #4a5568;
+            --card-shadow: rgba(0,0,0,0.3);
+            --stat-bg: #4a5568;
+            --btn-primary: #4299e1;
+            --btn-primary-hover: #3182ce;
+            --btn-secondary: #718096;
+            --btn-secondary-hover: #4a5568;
+            --loading-bg: #f7fafc;
+            --loading-border: #4299e1;
+        }
+        
+        [data-theme="dark"] body { background: var(--bg-gradient); }
+        [data-theme="dark"] .container { background: var(--container-bg); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        [data-theme="dark"] .header { background: var(--header-gradient); }
+        [data-theme="dark"] .search-section { background: var(--search-bg); }
+        [data-theme="dark"] .search-input { background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary); }
+        [data-theme="dark"] .search-input:focus { border-color: var(--input-border-focus); }
+        [data-theme="dark"] .search-input::placeholder { color: var(--text-muted); }
+        [data-theme="dark"] .btn-primary { background: var(--btn-primary); }
+        [data-theme="dark"] .btn-primary:hover { background: var(--btn-primary-hover); }
+        [data-theme="dark"] .btn-secondary { background: var(--btn-secondary); }
+        [data-theme="dark"] .btn-secondary:hover { background: var(--btn-secondary-hover); }
+        [data-theme="dark"] .stat-item { background: var(--stat-bg); color: var(--text-primary); box-shadow: 0 2px 10px var(--card-shadow); }
+        [data-theme="dark"] .stat-label { color: var(--text-secondary); }
+        [data-theme="dark"] .filter-select { background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary); }
+        [data-theme="dark"] .filter-select option { background: var(--input-bg); color: var(--text-primary); }
+        [data-theme="dark"] .result-item { background: var(--card-bg); border-color: var(--card-border); box-shadow: 0 2px 5px var(--card-shadow); }
+        [data-theme="dark"] .result-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        [data-theme="dark"] .provider-name { color: var(--text-primary); }
+        [data-theme="dark"] .event-description { color: var(--text-secondary); }
+        [data-theme="dark"] .event-keywords { color: var(--text-muted); }
+        [data-theme="dark"] .results-count { color: var(--text-secondary); }
+        [data-theme="dark"] .no-results { color: var(--text-secondary); }
+        [data-theme="dark"] .loading { color: var(--text-primary); }
+        [data-theme="dark"] .loading-spinner { border-color: var(--loading-bg); border-top-color: var(--loading-border); }
+        
+        /* Niveles de eventos en modo oscuro */
+        [data-theme="dark"] .level-information { background: rgba(72, 187, 120, 0.2); color: #9ae6b4; }
+        [data-theme="dark"] .level-warning { background: rgba(237, 137, 54, 0.2); color: #fbb454; }
+        [data-theme="dark"] .level-error { background: rgba(245, 101, 101, 0.2); color: #fc8181; }
+        [data-theme="dark"] .level-critical { background: rgba(229, 62, 62, 0.2); color: #f56565; }
+        [data-theme="dark"] .level-verbose { background: rgba(66, 153, 225, 0.2); color: #90cdf4; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙 Modo Oscuro</button>
             <h1>Busqueda de Eventos de Windows</h1>
             <p>Encuentra IDs de eventos, proveedores y descripciones</p>
         </div>
@@ -229,7 +288,44 @@ function Create-WebInterface {
         let filteredData = [];
         let allProviders = new Set();
         
-        window.addEventListener('DOMContentLoaded', loadEventsData);
+        // FUNCIONES DE MODO OSCURO
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme === 'auto' ? (prefersDark ? 'dark' : 'light') : savedTheme;
+            
+            setTheme(theme);
+            updateThemeToggle(theme);
+        }
+        
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+            updateThemeToggle(newTheme);
+        }
+        
+        function updateThemeToggle(theme) {
+            const toggle = document.getElementById('themeToggle');
+            if (theme === 'dark') {
+                toggle.innerHTML = '☀️ Modo Claro';
+                toggle.setAttribute('aria-label', 'Cambiar a modo claro');
+            } else {
+                toggle.innerHTML = '🌙 Modo Oscuro';
+                toggle.setAttribute('aria-label', 'Cambiar a modo oscuro');
+            }
+        }
+        
+        // Inicializar tema al cargar la página
+        window.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            loadEventsData();
+        });
         
         async function loadEventsData() {
             const loading = document.getElementById('loading');

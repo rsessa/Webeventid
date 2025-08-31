@@ -8,6 +8,7 @@ Una aplicación web completa para explorar y buscar Event IDs, proveedores y des
 
 - **🔍 Búsqueda en tiempo real** - Busca por Event ID, nombre de proveedor o descripción
 - **📊 Filtros avanzados** - Filtra por nivel de evento y proveedor específico
+- **🌙 Modo oscuro/claro** - Cambia entre temas con preferencias guardadas
 - **📱 Interfaz responsive** - Funciona en desktop, tablet y móvil
 - **⚡ Generación automática** - Script único que extrae todos los datos y crea la aplicación
 - **🌐 Servidor web integrado** - No requiere instalaciones adicionales
@@ -84,6 +85,7 @@ WebEventId/
 - **Estadísticas en tiempo real** - Total de eventos, proveedores y resultados
 - **Búsqueda inteligente** - Busca en Event IDs, nombres de proveedores y descripciones
 - **Filtros dinámicos** - Por nivel (Information, Warning, Error, Critical, Verbose)
+- **Modo oscuro/claro** - Toggle en la esquina superior derecha con persistencia local
 
 ### Resultados de Búsqueda
 - **Vista de tarjetas** - Información organizada y fácil de leer
@@ -100,6 +102,7 @@ WebEventId/
 ### Características Técnicas
 - **Carga asíncrona** - Los datos se cargan de forma no bloqueante
 - **Búsqueda incremental** - Resultados actualizados mientras escribes
+- **Modo oscuro inteligente** - Detecta preferencias del sistema y guarda configuración
 - **Manejo de errores** - Notificaciones claras de estado y errores
 - **Soporte CORS** - Servidor web configurado correctamente
 

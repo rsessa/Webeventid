@@ -124,24 +124,123 @@ function Create-WebInterface {
     <title>Busqueda de Eventos de Windows</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(45deg, #2c3e50, #3498db); color: white; padding: 30px; text-align: center; }
+        
+        /* Variables CSS para modo claro y oscuro */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --container-bg: white;
+            --text-color: #333;
+            --search-bg: #f8f9fa;
+            --border-color: #ddd;
+            --card-bg: white;
+            --card-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            --card-hover-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --autocomplete-bg: white;
+            --autocomplete-hover: #f8f9fa;
+        }
+        
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --container-bg: #2c3e50;
+            --text-color: #ecf0f1;
+            --search-bg: #34495e;
+            --border-color: #4a6741;
+            --card-bg: #34495e;
+            --card-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            --card-hover-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            --autocomplete-bg: #34495e;
+            --autocomplete-hover: #4a6741;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg-gradient); 
+            min-height: 100vh; 
+            padding: 20px;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: var(--container-bg); 
+            border-radius: 10px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .header { 
+            background: linear-gradient(45deg, #2c3e50, #3498db); 
+            color: white; 
+            padding: 30px; 
+            text-align: center;
+            position: relative;
+        }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { font-size: 1.2em; opacity: 0.9; }
-        .search-section { padding: 30px; background: #f8f9fa; }
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .search-section { 
+            padding: 30px; 
+            background: var(--search-bg);
+            transition: all 0.3s ease;
+        }
         .search-container { display: flex; gap: 20px; margin-bottom: 20px; }
         .search-input-container { flex: 1; position: relative; }
-        .search-input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        .search-input { 
+            width: 100%; 
+            padding: 15px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 8px; 
+            font-size: 16px; 
+            transition: border-color 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
         .search-input:focus { outline: none; border-color: #3498db; }
-        .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; }
-        .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .autocomplete-item:hover, .autocomplete-item.highlighted { background: #f8f9fa; }
+        .autocomplete-dropdown { 
+            position: absolute; 
+            top: 100%; 
+            left: 0; 
+            right: 0; 
+            background: var(--autocomplete-bg); 
+            border: 1px solid var(--border-color); 
+            border-top: none; 
+            border-radius: 0 0 8px 8px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            z-index: 1000; 
+            display: none;
+        }
+        .autocomplete-item { 
+            padding: 12px 15px; 
+            cursor: pointer; 
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        .autocomplete-item:hover, .autocomplete-item.highlighted { 
+            background: var(--autocomplete-hover); 
+        }
         .autocomplete-item:last-child { border-bottom: none; }
         .search-options { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
         .checkbox-container { display: flex; align-items: center; gap: 8px; }
         .checkbox-container input[type="checkbox"] { width: 18px; height: 18px; }
-        .checkbox-container label { font-size: 14px; color: #555; cursor: pointer; }
+        .checkbox-container label { font-size: 14px; color: var(--text-color); cursor: pointer; }
         .search-buttons { display: flex; gap: 10px; }
         .btn { padding: 15px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
         .btn-primary { background: #3498db; color: white; }
@@ -149,36 +248,170 @@ function Create-WebInterface {
         .btn-secondary { background: #95a5a6; color: white; }
         .btn-secondary:hover { background: #7f8c8d; }
         .stats { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
-        .stat-item { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .stat-item { 
+            background: var(--card-bg); 
+            padding: 15px 25px; 
+            border-radius: 8px; 
+            box-shadow: var(--card-shadow); 
+            text-align: center;
+            transition: all 0.3s ease;
+        }
         .stat-number { font-size: 2em; font-weight: bold; color: #3498db; }
-        .stat-label { color: #666; margin-top: 5px; }
+        .stat-label { color: var(--text-color); margin-top: 5px; opacity: 0.8; }
         .results-section { padding: 0 30px 30px 30px; }
         .loading { text-align: center; padding: 40px; display: none; }
-        .loading-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .results { display: none; }
-        .result-item { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .result-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
-        .event-id { font-size: 1.5em; font-weight: bold; color: #e74c3c; margin-bottom: 5px; }
-        .provider-name { font-size: 1.2em; color: #2c3e50; margin-bottom: 10px; }
-        .event-level { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold; margin-bottom: 10px; }
+        .results-count { margin-bottom: 15px; color: var(--text-color); font-style: italic; opacity: 0.8; }
+        .filters { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-select { 
+            padding: 10px; 
+            border: 2px solid var(--border-color); 
+            border-radius: 6px; 
+            font-size: 14px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        /* Estilos para las tarjetas en grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .result-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+        }
+        
+        .card-header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .event-id {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .provider-name {
+            font-size: 1.1em;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .card-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .event-level {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 12px;
+            text-align: center;
+            max-width: fit-content;
+        }
+        
         .level-information { background: #d4edda; color: #155724; }
         .level-warning { background: #fff3cd; color: #856404; }
         .level-error { background: #f8d7da; color: #721c24; }
         .level-critical { background: #f5c6cb; color: #721c24; }
         .level-verbose { background: #cce5ff; color: #004085; }
-        .event-description { color: #666; line-height: 1.6; margin-bottom: 10px; }
-        .event-keywords { font-size: 0.9em; color: #888; }
-        .no-results { text-align: center; padding: 40px; color: #666; display: none; }
-        .filters { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-select { padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .results-count { margin-bottom: 15px; color: #666; font-style: italic; }
-        @media (max-width: 768px) { .search-container { flex-direction: column; } .search-buttons { justify-content: center; } .stats { flex-direction: column; align-items: center; } .filters { flex-direction: column; } }
+        
+        .event-description {
+            color: var(--text-color);
+            line-height: 1.5;
+            margin-bottom: 12px;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .description-content {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .description-content.expanded {
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+        
+        .read-more-btn {
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 5px 0;
+            text-decoration: underline;
+            margin-top: 8px;
+        }
+        
+        .read-more-btn:hover {
+            color: #2980b9;
+        }
+        
+        .event-keywords {
+            font-size: 0.85em;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-color);
+            display: none;
+        }
+        
+        @media (max-width: 768px) { 
+            .search-container { flex-direction: column; } 
+            .search-buttons { justify-content: center; } 
+            .stats { flex-direction: column; align-items: center; } 
+            .filters { flex-direction: column; }
+            .results-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Modo Oscuro</button>
             <h1>Busqueda de Eventos de Windows</h1>
             <p>Encuentra IDs de eventos, proveedores y descripciones</p>
         </div>
@@ -225,7 +458,7 @@ function Create-WebInterface {
             </div>
             <div class="results" id="results">
                 <div class="results-count" id="resultsText"></div>
-                <div id="resultsContainer"></div>
+                <div id="resultsContainer" class="results-grid"></div>
             </div>
             <div class="no-results" id="noResults">
                 <h3>No se encontraron resultados</h3>
@@ -239,6 +472,21 @@ function Create-WebInterface {
         let allProviders = new Set();
         
         window.addEventListener('DOMContentLoaded', loadEventsData);
+        window.addEventListener('DOMContentLoaded', initializeTheme);
+        
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            
+            if (savedTheme === 'dark') {
+                body.setAttribute('data-theme', 'dark');
+                button.innerHTML = '☀️ Modo Claro';
+            } else {
+                body.removeAttribute('data-theme');
+                button.innerHTML = '🌙 Modo Oscuro';
+            }
+        }
         
         async function loadEventsData() {
             const loading = document.getElementById('loading');
@@ -326,27 +574,76 @@ function Create-WebInterface {
             resultsSection.style.display = 'block';
             resultsText.textContent = `Mostrando ${Math.min(results.length, 100)} de ${results.length} resultados`;
             
+            const grid = document.createElement('div');
+            grid.className = 'results-grid';
+            
             results.slice(0, 100).forEach(event => {
                 const item = createResultItem(event);
-                resultsContainer.appendChild(item);
+                grid.appendChild(item);
             });
+            
+            resultsContainer.appendChild(grid);
         }
         
         function createResultItem(event) {
             const div = document.createElement('div');
-            div.className = 'result-item';
+            div.className = 'result-card';
             const levelClass = event.Level ? `level-${event.Level.toLowerCase()}` : 'level-information';
             
+            const description = event.Description || 'Sin descripcion disponible';
+            const needsReadMore = description.length > 150;
+            const shortDescription = needsReadMore ? description.substring(0, 150) + '...' : description;
+            
             div.innerHTML = `
-                <div class="event-id">Event ID: ${event.EventId || 'N/A'}</div>
-                <div class="provider-name">📦 ${event.Provider || 'Unknown Provider'}</div>
-                ${event.Level ? `<span class="event-level ${levelClass}">${event.Level}</span>` : ''}
-                ${event.Version ? `<div style="margin-bottom: 10px;"><strong>Version:</strong> ${event.Version}</div>` : ''}
-                ${event.Description ? `<div class="event-description">${event.Description}</div>` : ''}
-                ${event.Keywords ? `<div class="event-keywords"><strong>Keywords:</strong> ${event.Keywords}</div>` : ''}
-                ${event.LogLinks ? `<div class="event-keywords"><strong>Log Links:</strong> ${event.LogLinks}</div>` : ''}
+                <div class="card-header">
+                    <div class="event-id">🆔 Event ID: ${event.EventId || 'N/A'}</div>
+                    <div class="provider-name">📦 ${event.Provider || 'Unknown Provider'}</div>
+                    ${event.Level ? `<span class="event-level ${levelClass}">${event.Level}</span>` : ''}
+                </div>
+                <div class="card-content">
+                    ${event.Version ? `<div style="margin-bottom: 10px; font-size: 0.9em;"><strong>Version:</strong> ${event.Version}</div>` : ''}
+                    <div class="event-description">
+                        <div class="description-content" ${needsReadMore ? 'data-full="' + description.replace(/"/g, '&quot;') + '"' : ''}>
+                            ${needsReadMore ? shortDescription : description}
+                        </div>
+                        ${needsReadMore ? '<button class="read-more-btn" onclick="toggleDescription(this)">Leer más</button>' : ''}
+                    </div>
+                    ${event.Keywords ? `<div class="event-keywords"><strong>Keywords:</strong> ${event.Keywords}</div>` : ''}
+                    ${event.LogLinks ? `<div class="event-keywords"><strong>Log Links:</strong> ${event.LogLinks}</div>` : ''}
+                </div>
             `;
             return div;
+        }
+        
+        function toggleDescription(button) {
+            const content = button.previousElementSibling;
+            const isExpanded = content.classList.contains('expanded');
+            
+            if (isExpanded) {
+                content.classList.remove('expanded');
+                content.innerHTML = content.getAttribute('data-full').substring(0, 150) + '...';
+                button.textContent = 'Leer más';
+            } else {
+                content.classList.add('expanded');
+                content.innerHTML = content.getAttribute('data-full');
+                button.textContent = 'Leer menos';
+            }
+        }
+        
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            
+            if (isDark) {
+                body.removeAttribute('data-theme');
+                button.innerHTML = '🌙 Modo Oscuro';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                button.innerHTML = '☀️ Modo Claro';
+                localStorage.setItem('theme', 'dark');
+            }
         }
         
         function clearSearch() {

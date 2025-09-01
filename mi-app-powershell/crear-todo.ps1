@@ -120,7 +120,10 @@ function Create-WebInterface {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=3.0">
+    <meta name="description" content="Herramienta para buscar y explorar eventos de Windows, proveedores y descripciones de Event Logs">
+    <meta name="keywords" content="Windows Events, Event Logs, PowerShell, Event ID, Windows Administration">
+    <meta name="author" content="Windows Event Search Tool">
     <title>Busqueda de Eventos de Windows</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -175,6 +178,9 @@ function Create-WebInterface {
             padding: 30px; 
             text-align: center;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { font-size: 1.2em; opacity: 0.9; }
@@ -190,6 +196,7 @@ function Create-WebInterface {
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
         .theme-toggle:hover {
             background: rgba(255,255,255,0.3);
@@ -200,8 +207,8 @@ function Create-WebInterface {
             background: var(--search-bg);
             transition: all 0.3s ease;
         }
-        .search-container { display: flex; gap: 20px; margin-bottom: 20px; }
-        .search-input-container { flex: 1; position: relative; }
+        .search-container { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-input-container { flex: 1; position: relative; min-width: 250px; }
         .search-input { 
             width: 100%; 
             padding: 15px; 
@@ -211,6 +218,7 @@ function Create-WebInterface {
             transition: border-color 0.3s;
             background: var(--card-bg);
             color: var(--text-color);
+            box-sizing: border-box;
         }
         .search-input:focus { outline: none; border-color: #3498db; }
         .autocomplete-dropdown { 
@@ -237,24 +245,105 @@ function Create-WebInterface {
             background: var(--autocomplete-hover); 
         }
         .autocomplete-item:last-child { border-bottom: none; }
-        .search-options { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .search-options { 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            justify-content: center;
+        }
         .checkbox-container { display: flex; align-items: center; gap: 8px; }
         .checkbox-container input[type="checkbox"] { width: 18px; height: 18px; }
         .checkbox-container label { font-size: 14px; color: var(--text-color); cursor: pointer; }
-        .search-buttons { display: flex; gap: 10px; }
-        .btn { padding: 15px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
+        
+        /* Búsqueda avanzada colapsable */
+        .advanced-search-toggle {
+            display: none;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 15px;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .advanced-search-toggle:hover {
+            background: var(--autocomplete-hover);
+            border-color: #3498db;
+            transform: translateY(-1px);
+        }
+        
+        .advanced-search-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+            max-height: 500px;
+            opacity: 1;
+        }
+        
+        .advanced-search-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .search-buttons { 
+            display: flex; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .btn { 
+            padding: 15px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            transition: all 0.3s; 
+            white-space: nowrap;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         .btn-primary { background: #3498db; color: white; }
         .btn-primary:hover { background: #2980b9; }
         .btn-secondary { background: #95a5a6; color: white; }
         .btn-secondary:hover { background: #7f8c8d; }
-        .stats { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .stats { 
+            display: flex; 
+            gap: 20px; 
+            justify-content: center; 
+            margin-bottom: 20px; 
+            flex-wrap: nowrap;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            max-width: fit-content;
+            margin: 0 auto 20px auto;
+            overflow-x: auto;
+        }
         .stat-item { 
-            background: var(--card-bg); 
-            padding: 15px 25px; 
-            border-radius: 8px; 
-            box-shadow: var(--card-shadow); 
+            background: transparent; 
+            padding: 0 20px; 
+            border-radius: 0; 
+            box-shadow: none; 
             text-align: center;
+            border-right: 2px solid var(--border-color);
             transition: all 0.3s ease;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .stat-item:last-child {
+            border-right: none;
         }
         .stat-number { font-size: 2em; font-weight: bold; color: #3498db; }
         .stat-label { color: var(--text-color); margin-top: 5px; opacity: 0.8; }
@@ -280,6 +369,7 @@ function Create-WebInterface {
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 20px;
             margin-top: 20px;
+            width: 100%;
         }
         
         .result-card {
@@ -293,6 +383,8 @@ function Create-WebInterface {
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            word-wrap: break-word;
+            hyphens: auto;
         }
         
         .result-card:hover {
@@ -321,6 +413,8 @@ function Create-WebInterface {
             color: var(--text-color);
             margin-bottom: 10px;
             font-weight: 600;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         
         .card-content {
@@ -353,6 +447,9 @@ function Create-WebInterface {
             margin-bottom: 12px;
             flex: 1;
             overflow: hidden;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
         }
         
         .description-content {
@@ -399,12 +496,317 @@ function Create-WebInterface {
             display: none;
         }
         
-        @media (max-width: 768px) { 
-            .search-container { flex-direction: column; } 
-            .search-buttons { justify-content: center; } 
-            .stats { flex-direction: column; align-items: center; } 
-            .filters { flex-direction: column; }
-            .results-grid { grid-template-columns: 1fr; }
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .results-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 15px;
+            }
+            .result-card {
+                height: 350px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            
+            .container { border-radius: 8px; }
+            
+            .header { padding: 20px 15px; }
+            .header h1 { font-size: 2em; }
+            .header p { font-size: 1em; }
+            
+            .theme-toggle {
+                position: static;
+                margin-bottom: 15px;
+                width: fit-content;
+                align-self: center;
+            }
+            
+            .search-section { padding: 20px 15px; }
+            
+            .search-container { 
+                flex-direction: column; 
+                gap: 15px;
+            }
+            
+            .search-buttons { 
+                justify-content: center; 
+                flex-direction: row;
+                margin-bottom: 20px;
+            }
+            
+            .btn { 
+                padding: 12px 20px; 
+                font-size: 14px;
+                flex: 1;
+                max-width: 120px;
+            }
+            
+            .search-options {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .stats { 
+                flex-direction: row; 
+                justify-content: center;
+                gap: 10px;
+                padding: 15px 10px;
+                margin: 0 auto 15px auto;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+            
+            .stat-item {
+                padding: 0 10px;
+                border-right: 1px solid var(--border-color);
+                min-width: 70px;
+                flex-shrink: 0;
+            }
+            
+            .stat-item:last-child {
+                border-right: none;
+            }
+            
+            .stat-number { font-size: 1.6em; }
+            .stat-label { font-size: 0.8em; }
+            
+            .stat-number { font-size: 1.8em; }
+            
+            .filters { 
+                flex-direction: column; 
+                gap: 10px;
+            }
+            
+            .filter-select {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+            
+            .results-section { padding: 0 15px 20px 15px; }
+            
+            .results-grid { 
+                grid-template-columns: 1fr; 
+                gap: 15px;
+            }
+            
+            .result-card {
+                height: auto;
+                min-height: 280px;
+                padding: 15px;
+            }
+            
+            .event-id { font-size: 1.2em; }
+            
+            .provider-name { 
+                font-size: 1em; 
+                word-break: break-word;
+            }
+            
+            .card-content {
+                overflow: visible;
+            }
+            
+            .description-content {
+                -webkit-line-clamp: 3;
+            }
+            
+            .autocomplete-dropdown {
+                font-size: 14px;
+            }
+            
+            .autocomplete-item {
+                padding: 10px 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body { padding: 5px; }
+            
+            .header { padding: 15px 10px; }
+            .header h1 { font-size: 1.8em; }
+            .header p { font-size: 0.9em; }
+            
+            .theme-toggle {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .search-section { padding: 15px 10px; }
+            
+            .search-input { 
+                padding: 12px; 
+                font-size: 16px; /* Evita zoom en iOS */
+            }
+            
+            .btn { 
+                padding: 10px 15px; 
+                font-size: 13px;
+            }
+            
+            .search-buttons { 
+                justify-content: center; 
+                flex-direction: row;
+                margin-bottom: 20px;
+            }
+            
+            .stats {
+                gap: 8px;
+                padding: 12px 8px;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                margin: 0 auto 15px auto;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .stat-item {
+                padding: 0 8px;
+                min-width: 60px;
+                flex-shrink: 0;
+            }
+            
+            .stat-number { font-size: 1.4em; }
+            .stat-label { 
+                font-size: 0.75em; 
+                white-space: nowrap;
+            }
+            
+            .results-section { padding: 0 10px 15px 10px; }
+            
+            .result-card {
+                padding: 12px;
+                min-height: 250px;
+            }
+            
+            .card-header {
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .event-id { 
+                font-size: 1.1em; 
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .provider-name { font-size: 0.95em; }
+            
+            .event-level {
+                font-size: 0.8em;
+                padding: 4px 8px;
+            }
+            
+            .event-description { 
+                font-size: 0.9em; 
+                line-height: 1.4;
+            }
+            
+            .description-content {
+                -webkit-line-clamp: 2;
+            }
+            
+            .event-keywords { 
+                font-size: 0.8em; 
+                margin-top: 8px;
+                padding-top: 8px;
+            }
+            
+            .read-more-btn {
+                font-size: 0.85em;
+                margin-top: 5px;
+            }
+            
+            .results-count {
+                font-size: 0.9em;
+                text-align: center;
+            }
+            
+            .no-results h3 { font-size: 1.2em; }
+            .no-results p { font-size: 0.9em; }
+        }
+        
+        /* Pantallas muy pequeñas - Activar búsqueda avanzada colapsable */
+        @media (max-width: 440px) {
+            .advanced-search-toggle {
+                display: block;
+            }
+            
+            .search-options {
+                margin-bottom: 10px;
+            }
+            
+            .filters {
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* Pantallas extra pequeñas (320px y menos) */
+        @media (max-width: 320px) {
+            body { padding: 2px; }
+            
+            .header { padding: 10px 5px; }
+            .header h1 { font-size: 1.5em; }
+            .header p { font-size: 0.8em; }
+            
+            .search-section { padding: 10px 5px; }
+            
+            .advanced-search-toggle {
+                padding: 10px 12px;
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
+            .stats {
+                gap: 5px;
+                padding: 8px 5px;
+                font-size: 0.9em;
+            }
+            
+            .stat-item {
+                padding: 0 5px;
+                min-width: 50px;
+            }
+            
+            .stat-number { font-size: 1.2em; }
+            .stat-label { 
+                font-size: 0.7em;
+                line-height: 1.2;
+            }
+            
+            .results-section { padding: 0 5px 10px 5px; }
+        }
+        
+        /* Mejoras adicionales para touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                min-height: 44px; /* Tamaño mínimo recomendado para touch */
+            }
+            
+            .theme-toggle {
+                min-height: 44px;
+            }
+            
+            .autocomplete-item {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+            
+            .read-more-btn {
+                min-height: 36px;
+                padding: 8px 12px;
+                border: 1px solid #3498db;
+                border-radius: 4px;
+                background: rgba(52, 152, 219, 0.1);
+            }
+            
+            .result-card:hover {
+                transform: none; /* Quitar animaciones hover en touch */
+            }
         }
     </style>
 </head>
@@ -421,29 +823,34 @@ function Create-WebInterface {
                     <input type="text" id="searchInput" class="search-input" placeholder="Buscar por ID de evento, nombre de proveedor o descripcion...">
                     <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
                 </div>
+            </div>
+            <button class="advanced-search-toggle" id="advancedToggle" onclick="toggleAdvancedSearch()">
+                🔍 Búsqueda Avanzada
+            </button>
+            <div class="advanced-search-content" id="advancedContent">
+                <div class="search-options">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="exactIdSearch">
+                        <label for="exactIdSearch">Busqueda exacta de ID</label>
+                    </div>
+                </div>
                 <div class="search-buttons">
                     <button class="btn btn-primary" onclick="searchEvents()">Buscar</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">Limpiar</button>
                 </div>
-            </div>
-            <div class="search-options">
-                <div class="checkbox-container">
-                    <input type="checkbox" id="exactIdSearch">
-                    <label for="exactIdSearch">Busqueda exacta de ID</label>
+                <div class="filters">
+                    <select id="levelFilter" class="filter-select">
+                        <option value="">Todos los niveles</option>
+                        <option value="Information">Information</option>
+                        <option value="Warning">Warning</option>
+                        <option value="Error">Error</option>
+                        <option value="Critical">Critical</option>
+                        <option value="Verbose">Verbose</option>
+                    </select>
+                    <select id="providerFilter" class="filter-select">
+                        <option value="">Todos los proveedores</option>
+                    </select>
                 </div>
-            </div>
-            <div class="filters">
-                <select id="levelFilter" class="filter-select">
-                    <option value="">Todos los niveles</option>
-                    <option value="Information">Information</option>
-                    <option value="Warning">Warning</option>
-                    <option value="Error">Error</option>
-                    <option value="Critical">Critical</option>
-                    <option value="Verbose">Verbose</option>
-                </select>
-                <select id="providerFilter" class="filter-select">
-                    <option value="">Todos los proveedores</option>
-                </select>
             </div>
             <div class="stats" id="stats">
                 <div class="stat-item"><div class="stat-number" id="totalEvents">-</div><div class="stat-label">Total Eventos</div></div>
@@ -473,6 +880,8 @@ function Create-WebInterface {
         
         window.addEventListener('DOMContentLoaded', loadEventsData);
         window.addEventListener('DOMContentLoaded', initializeTheme);
+        window.addEventListener('DOMContentLoaded', initializeAdvancedSearch);
+        window.addEventListener('resize', initializeAdvancedSearch);
         
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -643,6 +1052,33 @@ function Create-WebInterface {
                 body.setAttribute('data-theme', 'dark');
                 button.innerHTML = '☀️ Modo Claro';
                 localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        function toggleAdvancedSearch() {
+            const content = document.getElementById('advancedContent');
+            const button = document.getElementById('advancedToggle');
+            const isCollapsed = content.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                button.innerHTML = '🔼 Ocultar Búsqueda Avanzada';
+            } else {
+                content.classList.add('collapsed');
+                button.innerHTML = '🔍 Búsqueda Avanzada';
+            }
+        }
+        
+        function initializeAdvancedSearch() {
+            const content = document.getElementById('advancedContent');
+            const button = document.getElementById('advancedToggle');
+            
+            // Verificar si estamos en pantalla pequeña
+            if (window.innerWidth <= 440) {
+                content.classList.add('collapsed');
+                button.innerHTML = '🔍 Búsqueda Avanzada';
+            } else {
+                content.classList.remove('collapsed');
             }
         }
         

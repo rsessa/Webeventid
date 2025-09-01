@@ -6,18 +6,9 @@ param(
     [string]$OutputPath = ".\eventos"
 )
 
-Write-Host "======================================================"
-Write-Host "    GENERADOR COMPLETO DE WEB DE EVENTOS WINDOWS     " 
-Write-Host "======================================================"
-Write-Host "ARCHIVOS GENERADOS:" 
-Write-Host "   - web\index.html (Interfaz web)" 
-Write-Host "   - web\events-data.json (Base de datos)" 
-Write-Host "   - web\start-server.ps1 (Servidor web)" 
-Write-Host "   - $OutputPath\ (Archivos por proveedor)" 
-Write-Host "   - Total eventos procesados: $($allEventsData.Count)" 
-Write-Host "   - Total proveedores: $($providers.Count)" 
-Write-Host "   - Archivos individuales: $OutputPath\" 
-Write-Host "======================================================" 
+Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "    GENERADOR COMPLETO DE WEB DE EVENTOS WINDOWS     " -ForegroundColor Cyan
+Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Funcion para crear el servidor web
@@ -135,15 +126,22 @@ function Create-WebInterface {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow: hidden; }
-        .header { background: linear-gradient(45deg, #2c3e50, #3498db); color: white; padding: 30px; text-align: center; position: relative; }
+        .header { background: linear-gradient(45deg, #2c3e50, #3498db); color: white; padding: 30px; text-align: center; }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; }
         .header p { font-size: 1.2em; opacity: 0.9; }
-        .theme-toggle { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 25px; cursor: pointer; font-size: 14px; transition: all 0.3s; backdrop-filter: blur(10px); }
-        .theme-toggle:hover { background: rgba(255,255,255,0.3); transform: scale(1.05); }
         .search-section { padding: 30px; background: #f8f9fa; }
         .search-container { display: flex; gap: 20px; margin-bottom: 20px; }
-        .search-input { flex: 1; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
+        .search-input-container { flex: 1; position: relative; }
+        .search-input { width: 100%; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; transition: border-color 0.3s; }
         .search-input:focus { outline: none; border-color: #3498db; }
+        .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000; display: none; }
+        .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .autocomplete-item:hover, .autocomplete-item.highlighted { background: #f8f9fa; }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .search-options { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .checkbox-container { display: flex; align-items: center; gap: 8px; }
+        .checkbox-container input[type="checkbox"] { width: 18px; height: 18px; }
+        .checkbox-container label { font-size: 14px; color: #555; cursor: pointer; }
         .search-buttons { display: flex; gap: 10px; }
         .btn { padding: 15px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.3s; }
         .btn-primary { background: #3498db; color: white; }
@@ -176,77 +174,29 @@ function Create-WebInterface {
         .filter-select { padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; }
         .results-count { margin-bottom: 15px; color: #666; font-style: italic; }
         @media (max-width: 768px) { .search-container { flex-direction: column; } .search-buttons { justify-content: center; } .stats { flex-direction: column; align-items: center; } .filters { flex-direction: column; } }
-        
-        /* MODO OSCURO */
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --container-bg: #2d3748;
-            --header-gradient: linear-gradient(45deg, #1a202c, #2d3748);
-            --search-bg: #4a5568;
-            --input-bg: #2d3748;
-            --input-border: #4a5568;
-            --input-border-focus: #63b3ed;
-            --text-primary: #e2e8f0;
-            --text-secondary: #a0aec0;
-            --text-muted: #718096;
-            --card-bg: #2d3748;
-            --card-border: #4a5568;
-            --card-shadow: rgba(0,0,0,0.3);
-            --stat-bg: #4a5568;
-            --btn-primary: #4299e1;
-            --btn-primary-hover: #3182ce;
-            --btn-secondary: #718096;
-            --btn-secondary-hover: #4a5568;
-            --loading-bg: #f7fafc;
-            --loading-border: #4299e1;
-        }
-        
-        [data-theme="dark"] body { background: var(--bg-gradient); }
-        [data-theme="dark"] .container { background: var(--container-bg); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        [data-theme="dark"] .header { background: var(--header-gradient); }
-        [data-theme="dark"] .search-section { background: var(--search-bg); }
-        [data-theme="dark"] .search-input { background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary); }
-        [data-theme="dark"] .search-input:focus { border-color: var(--input-border-focus); }
-        [data-theme="dark"] .search-input::placeholder { color: var(--text-muted); }
-        [data-theme="dark"] .btn-primary { background: var(--btn-primary); }
-        [data-theme="dark"] .btn-primary:hover { background: var(--btn-primary-hover); }
-        [data-theme="dark"] .btn-secondary { background: var(--btn-secondary); }
-        [data-theme="dark"] .btn-secondary:hover { background: var(--btn-secondary-hover); }
-        [data-theme="dark"] .stat-item { background: var(--stat-bg); color: var(--text-primary); box-shadow: 0 2px 10px var(--card-shadow); }
-        [data-theme="dark"] .stat-label { color: var(--text-secondary); }
-        [data-theme="dark"] .filter-select { background: var(--input-bg); border-color: var(--input-border); color: var(--text-primary); }
-        [data-theme="dark"] .filter-select option { background: var(--input-bg); color: var(--text-primary); }
-        [data-theme="dark"] .result-item { background: var(--card-bg); border-color: var(--card-border); box-shadow: 0 2px 5px var(--card-shadow); }
-        [data-theme="dark"] .result-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        [data-theme="dark"] .provider-name { color: var(--text-primary); }
-        [data-theme="dark"] .event-description { color: var(--text-secondary); }
-        [data-theme="dark"] .event-keywords { color: var(--text-muted); }
-        [data-theme="dark"] .results-count { color: var(--text-secondary); }
-        [data-theme="dark"] .no-results { color: var(--text-secondary); }
-        [data-theme="dark"] .loading { color: var(--text-primary); }
-        [data-theme="dark"] .loading-spinner { border-color: var(--loading-bg); border-top-color: var(--loading-border); }
-        
-        /* Niveles de eventos en modo oscuro */
-        [data-theme="dark"] .level-information { background: rgba(72, 187, 120, 0.2); color: #9ae6b4; }
-        [data-theme="dark"] .level-warning { background: rgba(237, 137, 54, 0.2); color: #fbb454; }
-        [data-theme="dark"] .level-error { background: rgba(245, 101, 101, 0.2); color: #fc8181; }
-        [data-theme="dark"] .level-critical { background: rgba(229, 62, 62, 0.2); color: #f56565; }
-        [data-theme="dark"] .level-verbose { background: rgba(66, 153, 225, 0.2); color: #90cdf4; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">🌙 Modo Oscuro</button>
             <h1>Busqueda de Eventos de Windows</h1>
             <p>Encuentra IDs de eventos, proveedores y descripciones</p>
         </div>
         <div class="search-section">
             <div class="search-container">
-                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por ID de evento, nombre de proveedor o descripcion...">
+                <div class="search-input-container">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar por ID de evento, nombre de proveedor o descripcion...">
+                    <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+                </div>
                 <div class="search-buttons">
                     <button class="btn btn-primary" onclick="searchEvents()">Buscar</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">Limpiar</button>
+                </div>
+            </div>
+            <div class="search-options">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="exactIdSearch">
+                    <label for="exactIdSearch">Busqueda exacta de ID</label>
                 </div>
             </div>
             <div class="filters">
@@ -288,44 +238,7 @@ function Create-WebInterface {
         let filteredData = [];
         let allProviders = new Set();
         
-        // FUNCIONES DE MODO OSCURO
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const theme = savedTheme === 'auto' ? (prefersDark ? 'dark' : 'light') : savedTheme;
-            
-            setTheme(theme);
-            updateThemeToggle(theme);
-        }
-        
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-        }
-        
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            setTheme(newTheme);
-            updateThemeToggle(newTheme);
-        }
-        
-        function updateThemeToggle(theme) {
-            const toggle = document.getElementById('themeToggle');
-            if (theme === 'dark') {
-                toggle.innerHTML = '☀️ Modo Claro';
-                toggle.setAttribute('aria-label', 'Cambiar a modo claro');
-            } else {
-                toggle.innerHTML = '🌙 Modo Oscuro';
-                toggle.setAttribute('aria-label', 'Cambiar a modo oscuro');
-            }
-        }
-        
-        // Inicializar tema al cargar la página
-        window.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            loadEventsData();
-        });
+        window.addEventListener('DOMContentLoaded', loadEventsData);
         
         async function loadEventsData() {
             const loading = document.getElementById('loading');
@@ -369,13 +282,25 @@ function Create-WebInterface {
             const query = document.getElementById('searchInput').value.trim().toLowerCase();
             const levelFilter = document.getElementById('levelFilter').value;
             const providerFilter = document.getElementById('providerFilter').value;
+            const exactIdSearch = document.getElementById('exactIdSearch').checked;
             
             filteredData = eventsData.filter(event => {
-                const matchesQuery = !query || 
-                    event.EventId?.toString().includes(query) ||
-                    event.Provider?.toLowerCase().includes(query) ||
-                    event.Description?.toLowerCase().includes(query) ||
-                    event.Keywords?.toLowerCase().includes(query);
+                let matchesQuery = !query;
+                
+                if (query) {
+                    if (exactIdSearch && /^\d+$/.test(query)) {
+                        // Busqueda exacta de ID numerico
+                        matchesQuery = event.EventId?.toString() === query;
+                    } else {
+                        // Busqueda normal (contiene)
+                        matchesQuery = 
+                            event.EventId?.toString().includes(query) ||
+                            event.Provider?.toLowerCase().includes(query) ||
+                            event.Description?.toLowerCase().includes(query) ||
+                            event.Keywords?.toLowerCase().includes(query);
+                    }
+                }
+                
                 const matchesLevel = !levelFilter || event.Level === levelFilter;
                 const matchesProvider = !providerFilter || event.Provider === providerFilter;
                 return matchesQuery && matchesLevel && matchesProvider;
@@ -383,9 +308,7 @@ function Create-WebInterface {
             
             updateStats();
             displayResults(filteredData);
-        }
-        
-        function displayResults(results) {
+        }        function displayResults(results) {
             const resultsContainer = document.getElementById('resultsContainer');
             const resultsSection = document.getElementById('results');
             const noResults = document.getElementById('noResults');
@@ -416,7 +339,7 @@ function Create-WebInterface {
             
             div.innerHTML = `
                 <div class="event-id">Event ID: ${event.EventId || 'N/A'}</div>
-                <div class="provider-name">[PROVIDER] ${event.Provider || 'Unknown Provider'}</div>
+                <div class="provider-name">📦 ${event.Provider || 'Unknown Provider'}</div>
                 ${event.Level ? `<span class="event-level ${levelClass}">${event.Level}</span>` : ''}
                 ${event.Version ? `<div style="margin-bottom: 10px;"><strong>Version:</strong> ${event.Version}</div>` : ''}
                 ${event.Description ? `<div class="event-description">${event.Description}</div>` : ''}
@@ -438,7 +361,7 @@ function Create-WebInterface {
         function showSuccessMessage(message) {
             const alertDiv = document.createElement('div');
             alertDiv.style.cssText = `position: fixed; top: 20px; right: 20px; background: #d4edda; color: #155724; padding: 15px 20px; border-radius: 8px; border: 1px solid #c3e6cb; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 400px;`;
-            alertDiv.innerHTML = `[OK] ${message}`;
+            alertDiv.innerHTML = `✅ ${message}`;
             document.body.appendChild(alertDiv);
             setTimeout(() => alertDiv.remove(), 5000);
         }
@@ -463,9 +386,111 @@ function Create-WebInterface {
             `;
         }
         
+        // Funciones de autocompletado
+        let currentSuggestionIndex = -1;
+        
+        function showAutocomplete(suggestions) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            dropdown.innerHTML = '';
+            
+            if (suggestions.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+            
+            suggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.textContent = suggestion;
+                item.addEventListener('click', () => selectSuggestion(suggestion));
+                dropdown.appendChild(item);
+            });
+            
+            dropdown.style.display = 'block';
+            currentSuggestionIndex = -1;
+        }
+        
+        function hideAutocomplete() {
+            document.getElementById('autocompleteDropdown').style.display = 'none';
+            currentSuggestionIndex = -1;
+        }
+        
+        function selectSuggestion(suggestion) {
+            document.getElementById('searchInput').value = suggestion;
+            hideAutocomplete();
+            searchEvents();
+        }
+        
+        function getProviderSuggestions(query) {
+            if (!query || query.length < 2) return [];
+            
+            const providers = Array.from(allProviders)
+                .filter(provider => provider.toLowerCase().includes(query.toLowerCase()))
+                .sort()
+                .slice(0, 8); // Limitar a 8 sugerencias
+                
+            return providers;
+        }
+        
+        function handleKeyNavigation(e) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+            
+            if (items.length === 0) return;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, items.length - 1);
+                updateHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, -1);
+                updateHighlight(items);
+            } else if (e.key === 'Enter' && currentSuggestionIndex >= 0) {
+                e.preventDefault();
+                selectSuggestion(items[currentSuggestionIndex].textContent);
+            } else if (e.key === 'Escape') {
+                hideAutocomplete();
+            }
+        }
+        
+        function updateHighlight(items) {
+            items.forEach((item, index) => {
+                item.classList.toggle('highlighted', index === currentSuggestionIndex);
+            });
+        }
+        
         document.getElementById('searchInput').addEventListener('input', function() {
-            if (this.value.length >= 2 || this.value.length === 0) searchEvents();
+            const query = this.value.trim();
+            
+            // Mostrar autocompletado solo si no parece ser un ID numerico
+            if (query.length >= 2 && !/^\d+$/.test(query)) {
+                const suggestions = getProviderSuggestions(query);
+                showAutocomplete(suggestions);
+            } else {
+                hideAutocomplete();
+            }
+            
+            // Realizar busqueda si tiene contenido o esta vacio
+            if (query.length >= 2 || query.length === 0) {
+                searchEvents();
+            }
         });
+        
+        document.getElementById('searchInput').addEventListener('keydown', handleKeyNavigation);
+        document.getElementById('searchInput').addEventListener('blur', function() {
+            // Delay para permitir clicks en el dropdown
+            setTimeout(() => hideAutocomplete(), 150);
+        });
+        
+        // Click fuera del autocompletado para cerrarlo
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-input-container')) {
+                hideAutocomplete();
+            }
+        });
+        
+        document.getElementById('exactIdSearch').addEventListener('change', searchEvents);
         document.getElementById('levelFilter').addEventListener('change', searchEvents);
         document.getElementById('providerFilter').addEventListener('change', searchEvents);
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
@@ -579,7 +604,7 @@ Write-Host ""
 Write-Host "PARA INICIAR LA APLICACION WEB:" -ForegroundColor Cyan
 Write-Host "   1. Ejecuta: cd web" -ForegroundColor White
 Write-Host "   2. Ejecuta: .\start-server.ps1" -ForegroundColor White
-Write-Host "   3. Abre: http://localhost:$Port/mi-app-powershell/web/index.html" -ForegroundColor White
+Write-Host "   3. Abre: http://localhost:$Port" -ForegroundColor White
 Write-Host ""
 Write-Host "ARCHIVOS GENERADOS:" -ForegroundColor Cyan
 Write-Host "   • web\index.html (Interfaz web)" -ForegroundColor White
@@ -612,5 +637,3 @@ if ($AutoOpen) {
 
 Write-Host ""
 Write-Host "LISTO PARA USAR!" -ForegroundColor Green
-
-

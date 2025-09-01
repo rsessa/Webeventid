@@ -1,9 +1,22 @@
 ﻿# Script Maestro - Genera toda la aplicacion web de eventos de Windows
 # Incluye: extraccion de datos, generacion de archivos, creacion del servidor web y lanzamiento
+#
+# Parametros:
+#   -Port: Puerto para el servidor web (default: 8080)
+#   -AutoOpen: Lanza automaticamente el navegador
+#   -OutputPath: Carpeta para archivos de texto por proveedor (default: .\eventos)
+#   -WebPath: Carpeta para la aplicacion web (default: .\web)
+#
+# Ejemplos:
+#   .\crear-todo.ps1                                    # Configuracion basica
+#   .\crear-todo.ps1 -Port 8081 -AutoOpen              # Puerto personalizado y auto-abrir
+#   .\crear-todo.ps1 -WebPath ".\mi-web" -OutputPath ".\datos"  # Carpetas personalizadas
+#
 param(
     [int]$Port = 8080,
     [switch]$AutoOpen,
-    [string]$OutputPath = ".\eventos"
+    [string]$OutputPath = ".\eventos",
+    [string]$WebPath = ".\web"
 )
 
 Write-Host "======================================================" -ForegroundColor Cyan
@@ -54,8 +67,14 @@ try {
         # Determinar archivo a servir
         if (`$path -eq "/" -or `$path -eq "/index.html") {
             `$filePath = "index.html"
+        } elseif (`$path -eq "/events-data.json") {
+            `$filePath = "events-data.json"
         } else {
             `$filePath = `$path.TrimStart('/')
+            # Evitar acceso a archivos fuera del directorio web
+            if (`$filePath.Contains("..") -or `$filePath.Contains(":")) {
+                `$filePath = "index.html"
+            }
         }
         
         if (Test-Path `$filePath) {
@@ -1240,7 +1259,7 @@ function Create-WebInterface {
 # PASO 1: Crear directorios
 Write-Host "1. Creando estructura de directorios..." -ForegroundColor Green
 New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
-New-Item -ItemType Directory -Path ".\web" -Force | Out-Null
+New-Item -ItemType Directory -Path $WebPath -Force | Out-Null
 
 # PASO 2: Extraer datos de eventos
 Write-Host "2. Extrayendo datos de eventos de Windows..." -ForegroundColor Green
@@ -1313,15 +1332,15 @@ $jsonData = @{
     events = $allEventsData
 }
 
-$jsonData | ConvertTo-Json -Depth 3 | Out-File -FilePath ".\web\events-data.json" -Encoding UTF8
+$jsonData | ConvertTo-Json -Depth 3 | Out-File -FilePath "$WebPath\events-data.json" -Encoding UTF8
 
 # PASO 4: Crear interfaz web
 Write-Host "4. Creando interfaz web..." -ForegroundColor Green
-Create-WebInterface -WebPath ".\web"
+Create-WebInterface -WebPath $WebPath
 
 # PASO 5: Crear servidor web
 Write-Host "5. Creando servidor web..." -ForegroundColor Green
-Create-WebServer -WebPath ".\web" -ServerPort $Port
+Create-WebServer -WebPath $WebPath -ServerPort $Port
 
 # PASO 6: Mostrar resumen
 Write-Host ""
@@ -1335,14 +1354,19 @@ Write-Host "   • Total proveedores: $($providers.Count)" -ForegroundColor Whit
 Write-Host "   • Archivos individuales: $OutputPath\" -ForegroundColor White
 Write-Host ""
 Write-Host "PARA INICIAR LA APLICACION WEB:" -ForegroundColor Cyan
-Write-Host "   1. Ejecuta: cd web" -ForegroundColor White
+Write-Host "   1. Ejecuta: cd $WebPath" -ForegroundColor White
 Write-Host "   2. Ejecuta: .\start-server.ps1" -ForegroundColor White
-Write-Host "   3. Abre: http://localhost:$Port" -ForegroundColor White
+Write-Host "   3. Abre tu navegador en: http://localhost:$Port" -ForegroundColor White
+Write-Host ""
+Write-Host "ESTRUCTURA DE ARCHIVOS:" -ForegroundColor Cyan
+Write-Host "   • Carpeta $WebPath\ contiene la aplicacion web completa" -ForegroundColor White
+Write-Host "   • El servidor sirve archivos desde la carpeta $WebPath\" -ForegroundColor White
+Write-Host "   • URL de acceso: http://localhost:$Port (redirige a index.html)" -ForegroundColor White
 Write-Host ""
 Write-Host "ARCHIVOS GENERADOS:" -ForegroundColor Cyan
-Write-Host "   • web\index.html (Interfaz web)" -ForegroundColor White
-Write-Host "   • web\events-data.json (Base de datos)" -ForegroundColor White
-Write-Host "   • web\start-server.ps1 (Servidor web)" -ForegroundColor White
+Write-Host "   • $WebPath\index.html (Interfaz web)" -ForegroundColor White
+Write-Host "   • $WebPath\events-data.json (Base de datos)" -ForegroundColor White
+Write-Host "   • $WebPath\start-server.ps1 (Servidor web)" -ForegroundColor White
 Write-Host "   • $OutputPath\ (Archivos por proveedor)" -ForegroundColor White
 
 # PASO 7: Auto-lanzar si se solicita
@@ -1350,17 +1374,17 @@ if ($AutoOpen) {
     Write-Host ""
     Write-Host "Auto-lanzando aplicacion..." -ForegroundColor Yellow
     
-    Push-Location ".\web"
+    Push-Location $WebPath
     
     # Lanzar servidor en segundo plano
     $job = Start-Job -ScriptBlock {
         param($webPath, $serverPort)
         Set-Location $webPath
         & ".\start-server.ps1" -Port $serverPort
-    } -ArgumentList (Get-Location).Path, $Port
+    } -ArgumentList (Resolve-Path $WebPath).Path, $Port
     
     Start-Sleep 3
-    Start-Process "http://localhost:$Port/mi-app-powershell/web/index.html"
+    Start-Process "http://localhost:$Port"
 
     Write-Host "Servidor ejecutandose (Job ID: $($job.Id))" -ForegroundColor Green
     Write-Host "   Para detener: Stop-Job $($job.Id); Remove-Job $($job.Id)" -ForegroundColor Yellow

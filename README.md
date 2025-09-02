@@ -52,9 +52,9 @@
 ```powershell
 # Clona el repositorio
 git clone https://github.com/rsessa/WebEventId.git
-cd WebEventId\mi-app-powershell
+cd WebEventId
 
-# Ejecuta el script con configuración predeterminada
+# Ejecuta el script con configuración predeterminada (ahora en la raíz)
 .\crear-todo.ps1
 ```
 
@@ -77,8 +77,8 @@ cd WebEventId\mi-app-powershell
 |-----------|------|---------|------------|-------------|
 | `-Port` | `[int]` | `8080` | 1024-65535 | Puerto para el servidor web |
 | `-AutoOpen` | `[switch]` | `false` | - | Auto-lanza navegador y servidor con validaciones |
-| `-OutputPath` | `[string]` | `".\eventos"` | Sin caracteres especiales | Carpeta para archivos de texto por proveedor |
-| `-WebPath` | `[string]` | `".\web"` | Sin caracteres especiales | Carpeta para la aplicación web |
+| `-OutputPath` | `[string]` | `".\[SO]\eventos"` | Sin caracteres especiales | Carpeta para archivos de texto por proveedor |
+| `-WebPath` | `[string]` | `".\[SO]\web"` | Sin caracteres especiales | Carpeta para la aplicación web |
 
 ### Validaciones Automáticas del Sistema
 
@@ -90,14 +90,14 @@ El script valida automáticamente:
 - ✅ **Caracteres válidos** en rutas
 - ✅ **Archivos críticos** antes del auto-lanzamiento
 
-## 📁 Estructura de Archivos Generados
+## 📁 Estructura de Archivos Generados (Organizados por SO)
 
 ```
 WebEventId/
-├── mi-app-powershell/
-│   └── crear-todo.ps1          # Script principal
-├── eventos/                    # Archivos por proveedor (configurable)
-│   ├── Microsoft-Windows-Kernel-General.txt
+├── crear-todo.ps1                      # Script principal (movido a la raíz)
+├── [Sistema-Build]/                    # Carpeta específica del SO detectado
+│   ├── eventos/                        # Archivos por proveedor (organizados por SO)
+│   │   ├── Microsoft-Windows-Kernel-General.txt
 │   ├── Application.txt
 │   └── ...
 └── web/                        # Aplicación web (configurable)

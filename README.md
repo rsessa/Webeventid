@@ -265,7 +265,6 @@ Para actualizar los datos:
 
 - **Issues**: [GitHub Issues](https://github.com/rsessa/WebEventId/issues)
 - **Wiki**: [Documentación completa](https://github.com/rsessa/WebEventId/wiki)
-- **Discussions**: [GitHub Discussions](https://github.com/rsessa/WebEventId/discussions)
 
 ## 📄 Licencia
 
@@ -283,4 +282,3 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 **¿Encontraste un bug?** 🐛 [Reporta un issue](https://github.com/rsessa/WebEventId/issues/new)
 
-**¿Tienes una idea?** 💡 [Inicia una discusión](https://github.com/rsessa/WebEventId/discussions/new)

@@ -1,4 +1,31 @@
-eventos/
-web/
-WebEventId.code-workspace
-.gitignore
+# Ignorar todas las carpetas generadas por versión de SO
+*/eventos/
+*/web/
+*_Pro-*/
+*_Home-*/
+*_Enterprise-*/
+*_Education-*/
+
+# Ignorar archivos de configuración de VS Code
+*.code-workspace
+.vscode/
+
+# Ignorar archivos temporales y de sistema
+*.tmp
+*.temp
+Thumbs.db
+Desktop.ini
+
+# Ignorar archivos de log y errores generados por el script
+ERROR_*.txt
+*.log
+
+# Ignorar archivos de datos JSON generados
+events-data.json
+
+# Incluir solo estos archivos esenciales:
+# - README.md (se incluye automáticamente)
+# - crear-todo.ps1 (se incluye automáticamente)
+
+# Ignorar carpeta antigua
+mi-app-powershell/

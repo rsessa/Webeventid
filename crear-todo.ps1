@@ -1,16 +1,21 @@
 ﻿# Script Maestro - Genera toda la aplicacion web de eventos de Windows
 # Incluye: extraccion de datos, generacion de archivos, creacion del servidor web y lanzamiento
 #
+# ESTRUCTURA DE CARPETAS:
+# Las carpetas se organizan automáticamente por versión del SO:
+# .\[Windows-Version-Build]\eventos\  - Archivos de eventos por proveedor
+# .\[Windows-Version-Build]\web\      - Aplicación web generada
+#
 # Parametros:
 #   -Port: Puerto para el servidor web (default: 8080)
 #   -AutoOpen: Lanza automaticamente el navegador
-#   -OutputPath: Carpeta para archivos de texto por proveedor (default: .\eventos)
-#   -WebPath: Carpeta para la aplicacion web (default: .\web)
+#   -OutputPath: Carpeta para archivos de texto por proveedor (default: .\[SO]\eventos)
+#   -WebPath: Carpeta para la aplicacion web (default: .\[SO]\web)
 #
 # Ejemplos:
-#   .\crear-todo.ps1                                    # Configuracion basica
+#   .\crear-todo.ps1                                    # Configuracion basica con carpetas por SO
 #   .\crear-todo.ps1 -Port 8081 -AutoOpen              # Puerto personalizado y auto-abrir
-#   .\crear-todo.ps1 -WebPath ".\mi-web" -OutputPath ".\datos"  # Carpetas personalizadas
+#   .\crear-todo.ps1 -WebPath ".\mi-web" -OutputPath ".\datos"  # Carpetas personalizadas (ignora organización por SO)
 #
 param(
     [int]$Port = 8080,
@@ -31,9 +36,43 @@ if ($WebPath -match '[<>:"|?*]' -or $OutputPath -match '[<>:"|?*]') {
     exit 1
 }
 
+# Función para obtener información del SO y crear estructura de carpetas
+function Get-OSVersionFolder {
+    try {
+        $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+        $osName = $osInfo.Caption -replace "Microsoft ", "" -replace "Windows ", ""
+        $osVersion = $osInfo.Version
+        $osBuild = $osInfo.BuildNumber
+        
+        # Crear nombre de carpeta limpio para el SO
+        $osFolder = "$osName-$osBuild" -replace "[^a-zA-Z0-9.-]", "_"
+        
+        Write-Host "Sistema detectado: $($osInfo.Caption) (Build $osBuild)" -ForegroundColor Cyan
+        return $osFolder
+    }
+    catch {
+        Write-Host "No se pudo detectar la versión del SO, usando 'Windows-Unknown'" -ForegroundColor Yellow
+        return "Windows-Unknown"
+    }
+}
+
+# Obtener carpeta del SO y actualizar rutas
+$osFolder = Get-OSVersionFolder
+$baseOutputPath = $OutputPath
+$baseWebPath = $WebPath
+
+# Si las rutas son las predeterminadas, organizarlas por SO
+if ($OutputPath -eq ".\eventos") {
+    $OutputPath = ".\$osFolder\eventos"
+}
+if ($WebPath -eq ".\web") {
+    $WebPath = ".\$osFolder\web"
+}
+
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host "    GENERADOR COMPLETO DE WEB DE EVENTOS WINDOWS     " -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
+Write-Host "Carpetas organizadas por SO: $osFolder" -ForegroundColor Green
 Write-Host ""
 
 # Función para validar prerrequisitos del sistema
@@ -1884,9 +1923,10 @@ Write-Host "   1. Ejecuta: cd `"$WebPath`"" -ForegroundColor White
 Write-Host "   2. Ejecuta: .\start-server.ps1" -ForegroundColor White
 Write-Host "   3. Abre tu navegador en: http://localhost:$Port" -ForegroundColor White
 Write-Host ""
-Write-Host "ESTRUCTURA DE ARCHIVOS:" -ForegroundColor Cyan
+Write-Host "ESTRUCTURA DE ARCHIVOS (Organizada por SO):" -ForegroundColor Cyan
+Write-Host "   • Sistema detectado: $osFolder" -ForegroundColor White
 Write-Host "   • Carpeta `"$WebPath`" contiene la aplicacion web completa" -ForegroundColor White
-Write-Host "   • El servidor sirve archivos desde la carpeta web" -ForegroundColor White
+Write-Host "   • Carpeta `"$OutputPath`" contiene archivos de eventos por proveedor" -ForegroundColor White
 Write-Host "   • URL de acceso: http://localhost:$Port (redirige a index.html)" -ForegroundColor White
 Write-Host ""
 Write-Host "ARCHIVOS GENERADOS:" -ForegroundColor Cyan

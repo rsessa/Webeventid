@@ -483,6 +483,10 @@ function Create-WebInterface {
             hyphens: auto;
         }
         
+        .result-card {
+            cursor: pointer;
+        }
+        
         .result-card:hover {
             transform: translateY(-5px);
             box-shadow: var(--card-hover-shadow);
@@ -590,6 +594,210 @@ function Create-WebInterface {
             padding: 40px;
             color: var(--text-color);
             display: none;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px 30px;
+            border-bottom: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .modal-body {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+            color: var(--text-color);
+        }
+        
+        .modal-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--search-bg);
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .modal-section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-field {
+            display: flex;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .modal-field-label {
+            font-weight: bold;
+            min-width: 120px;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+        
+        .modal-field-value {
+            flex: 1;
+            color: var(--text-color);
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .modal-description {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* Responsive modal */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 2% auto;
+                max-height: 95vh;
+            }
+            
+            .modal-header {
+                padding: 15px 20px;
+            }
+            
+            .modal-title {
+                font-size: 1.3em;
+            }
+            
+            .modal-body {
+                padding: 20px;
+                max-height: 75vh;
+            }
+            
+            .modal-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .modal-field {
+                flex-direction: column;
+                margin-bottom: 15px;
+            }
+            
+            .modal-field-label {
+                min-width: unset;
+                margin-bottom: 5px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .modal-content {
+                width: 98%;
+                margin: 1% auto;
+                max-height: 98vh;
+            }
+            
+            .modal-header {
+                padding: 12px 15px;
+            }
+            
+            .modal-title {
+                font-size: 1.1em;
+            }
+            
+            .close {
+                width: 35px;
+                height: 35px;
+                font-size: 24px;
+            }
+            
+            .modal-body {
+                padding: 15px;
+                max-height: 80vh;
+            }
+            
+            .modal-section {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .modal-section-title {
+                font-size: 1.1em;
+            }
         }
         
         /* Responsive Design */
@@ -1018,6 +1226,19 @@ function Create-WebInterface {
             </div>
         </div>
     </div>
+    
+    <!-- Modal para mostrar detalles del evento -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detalles del Evento</h2>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
     <script>
         let eventsData = [];
         let filteredData = [];
@@ -1142,6 +1363,9 @@ function Create-WebInterface {
         function createResultItem(event) {
             const div = document.createElement('div');
             div.className = 'result-card';
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', () => openEventModal(event));
+            
             const levelClass = event.Level ? `level-${event.Level.toLowerCase()}` : 'level-information';
             
             const description = event.Description || 'Sin descripcion disponible';
@@ -1160,10 +1384,13 @@ function Create-WebInterface {
                         <div class="description-content" ${needsReadMore ? 'data-full="' + description.replace(/"/g, '&quot;') + '"' : ''}>
                             ${needsReadMore ? shortDescription : description}
                         </div>
-                        ${needsReadMore ? '<button class="read-more-btn" onclick="toggleDescription(this)">Leer más</button>' : ''}
+                        ${needsReadMore ? '<button class="read-more-btn" onclick="event.stopPropagation(); toggleDescription(this)">Leer más</button>' : ''}
                     </div>
                     ${event.Keywords ? `<div class="event-keywords"><strong>Keywords:</strong> ${event.Keywords}</div>` : ''}
                     ${event.LogLinks ? `<div class="event-keywords"><strong>Log Links:</strong> ${event.LogLinks}</div>` : ''}
+                </div>
+                <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid var(--border-color); color: #3498db; font-size: 0.9em;">
+                    👆 Click para ver detalles completos
                 </div>
             `;
             return div;
@@ -1183,6 +1410,118 @@ function Create-WebInterface {
                 button.textContent = 'Leer menos';
             }
         }
+        
+        function openEventModal(event) {
+            const modal = document.getElementById('eventModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalTitle.innerHTML = `🆔 Event ID: ${event.EventId || 'N/A'} - ${event.Provider || 'Unknown Provider'}`;
+            
+            modalBody.innerHTML = `
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span>📊</span>
+                        Información Básica
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-field-label">Event ID:</div>
+                        <div class="modal-field-value">${event.EventId || 'N/A'}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-field-label">Proveedor:</div>
+                        <div class="modal-field-value">${event.Provider || 'Unknown Provider'}</div>
+                    </div>
+                    ${event.Version ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Versión:</div>
+                        <div class="modal-field-value">${event.Version}</div>
+                    </div>
+                    ` : ''}
+                    ${event.Level ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Nivel:</div>
+                        <div class="modal-field-value">
+                            <span class="event-level level-${event.Level.toLowerCase()}">${event.Level}</span>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${event.Keywords ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Keywords:</div>
+                        <div class="modal-field-value">${event.Keywords}</div>
+                    </div>
+                    ` : ''}
+                    ${event.LogLinks ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Log Links:</div>
+                        <div class="modal-field-value">${event.LogLinks}</div>
+                    </div>
+                    ` : ''}
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span>📝</span>
+                        Descripción Completa
+                    </div>
+                    <div class="modal-description">
+                        ${event.Description || 'Sin descripción disponible'}
+                    </div>
+                </div>
+                
+                ${event.Opcode || event.Task || event.Channel ? `
+                <div class="modal-section">
+                    <div class="modal-section-title">
+                        <span>⚙️</span>
+                        Información Técnica
+                    </div>
+                    ${event.Opcode ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Opcode:</div>
+                        <div class="modal-field-value">${event.Opcode}</div>
+                    </div>
+                    ` : ''}
+                    ${event.Task ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Task:</div>
+                        <div class="modal-field-value">${event.Task}</div>
+                    </div>
+                    ` : ''}
+                    ${event.Channel ? `
+                    <div class="modal-field">
+                        <div class="modal-field-label">Channel:</div>
+                        <div class="modal-field-value">${event.Channel}</div>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+            `;
+            
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevenir scroll en el fondo
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('eventModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restaurar scroll
+        }
+        
+        // Cerrar modal al hacer click fuera de él
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('eventModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Cerrar modal con tecla ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
         
         function toggleTheme() {
             const body = document.body;

@@ -11,6 +11,7 @@ Una herramienta completa de PowerShell que extrae todos los eventos de Windows d
 - **Extracción Completa**: Obtiene todos los proveedores de eventos de Windows y sus Event IDs
 - **Aplicación Web Moderna**: Interfaz responsive con modo oscuro/claro
 - **Búsqueda Avanzada**: Búsqueda por ID exacto, proveedor, descripción o palabras clave
+- **Modal de Detalles**: Tarjetas clicables que abren ventanas modales con información completa
 - **Servidor Web Integrado**: Servidor HTTP con soporte CORS incluido
 - **Filtros Inteligentes**: Filtrado por nivel de evento y proveedor
 - **Autocompletado**: Sugerencias automáticas de proveedores
@@ -84,11 +85,19 @@ WebEventId/
   - Búsqueda en descripciones y palabras clave
   - Autocompletado de proveedores
 
+- **📋 Modal de Detalles Completos**:
+  - Tarjetas clicables que abren ventanas modales
+  - Información organizada en secciones claras
+  - Descripción completa sin truncar
+  - Datos técnicos adicionales (Opcode, Task, Channel)
+  - Controles intuitivos (ESC, click fuera, botón cerrar)
+
 - **🎨 Diseño Moderno**:
   - Modo oscuro/claro conmutable
   - Diseño responsive para todos los dispositivos
   - Cards organizadas en grid
-  - Animaciones suaves
+  - Animaciones suaves y efectos de hover
+  - Modal con backdrop difuminado
 
 - **📊 Estadísticas en Tiempo Real**:
   - Total de eventos procesados
@@ -99,6 +108,24 @@ WebEventId/
   - Por nivel de evento (Information, Warning, Error, Critical, Verbose)
   - Por proveedor específico
   - Búsqueda exacta de Event ID
+
+### Navegación y Usabilidad
+
+- **👆 Interacción Intuitiva**: 
+  - Click en cualquier tarjeta para ver detalles completos
+  - Indicadores visuales claros ("Click para ver detalles")
+  - Transiciones suaves entre vistas
+
+- **⌨️ Controles de Teclado**:
+  - Navegación con flechas en autocompletado
+  - Enter para confirmar selecciones
+  - ESC para cerrar modales
+  - Tab para navegación accesible
+
+- **📱 Optimización Móvil**:
+  - Búsqueda avanzada colapsable en pantallas pequeñas
+  - Modal que ocupa toda la pantalla en móviles
+  - Touch-friendly con elementos de tamaño adecuado
 
 ### Iniciar la Aplicación Web
 
@@ -139,19 +166,22 @@ Para cada evento, el script extrae:
 
 ## 🚀 Características Técnicas
 
-### Servidor Web
+### Aplicación Web
 - **HTTP Server**: Basado en `System.Net.HttpListener`
 - **CORS**: Habilitado para desarrollo
 - **Content-Type**: Detección automática para HTML, JSON, JS, CSS
 - **Error Handling**: Manejo robusto de errores 404 y 500
 - **UTF-8**: Soporte completo para caracteres especiales
 
-### Aplicación Web
+### Interfaz de Usuario
 - **Vanilla JavaScript**: Sin dependencias externas
+- **Modal System**: Ventanas emergentes para detalles completos
 - **Local Storage**: Persistencia de preferencias de tema
 - **Progressive Enhancement**: Funciona sin JavaScript (búsqueda básica)
 - **Mobile First**: Diseño responsive desde 320px
 - **Accessibility**: Navegación por teclado y lectores de pantalla
+- **Touch Optimized**: Elementos táctiles de tamaño adecuado
+- **Keyboard Navigation**: Soporte completo para navegación por teclado
 
 ## 🐛 Solución de Problemas
 
@@ -211,11 +241,14 @@ Las contribuciones son bienvenidas. Por favor:
 
 ## 📝 Casos de Uso
 
-- **Administradores de Sistema**: Explorar Event IDs para troubleshooting
-- **Desarrolladores**: Encontrar códigos de evento para aplicaciones
-- **Auditores**: Revisar eventos de seguridad disponibles
-- **Estudiantes**: Aprender sobre el sistema de eventos de Windows
-- **Documentación**: Crear referencias de Event IDs
+- **Administradores de Sistema**: Explorar Event IDs para troubleshooting y diagnóstico
+- **Desarrolladores**: Encontrar códigos de evento específicos para aplicaciones
+- **Auditores de Seguridad**: Revisar eventos de seguridad disponibles y sus descripciones
+- **Estudiantes de IT**: Aprender sobre el sistema de eventos de Windows
+- **Técnicos de Soporte**: Buscar rápidamente información detallada de eventos
+- **Documentación**: Crear referencias completas de Event IDs con descripciones
+- **Investigación Forense**: Analizar tipos de eventos disponibles para investigaciones
+- **Monitoreo de Sistemas**: Identificar eventos relevantes para alertas y dashboards
 
 ## 🔄 Actualizaciones
 
@@ -232,7 +265,6 @@ Para actualizar los datos:
 
 - **Issues**: [GitHub Issues](https://github.com/rsessa/WebEventId/issues)
 - **Wiki**: [Documentación completa](https://github.com/rsessa/WebEventId/wiki)
-- **Discussions**: [GitHub Discussions](https://github.com/rsessa/WebEventId/discussions)
 
 ## 📄 Licencia
 
@@ -250,4 +282,3 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 **¿Encontraste un bug?** 🐛 [Reporta un issue](https://github.com/rsessa/WebEventId/issues/new)
 
-**¿Tienes una idea?** 💡 [Inicia una discusión](https://github.com/rsessa/WebEventId/discussions/new)

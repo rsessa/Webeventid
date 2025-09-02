@@ -19,10 +19,59 @@ param(
     [string]$WebPath = ".\web"
 )
 
+# VALIDACIONES DE PARÁMETROS
+if ($Port -lt 1024 -or $Port -gt 65535) {
+    Write-Host "Error: Puerto debe estar entre 1024 y 65535" -ForegroundColor Red
+    exit 1
+}
+
+# Validar caracteres en rutas
+if ($WebPath -match '[<>:"|?*]' -or $OutputPath -match '[<>:"|?*]') {
+    Write-Host "Error: Las rutas contienen caracteres no válidos" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host "    GENERADOR COMPLETO DE WEB DE EVENTOS WINDOWS     " -ForegroundColor Cyan
 Write-Host "======================================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Función para validar prerrequisitos del sistema
+function Test-SystemRequirements {
+    Write-Host "Validando prerrequisitos del sistema..." -ForegroundColor Cyan
+    
+    # Verificar PowerShell version
+    if ($PSVersionTable.PSVersion.Major -lt 5) {
+        Write-Host "Error: Se requiere PowerShell 5.0 o superior" -ForegroundColor Red
+        return $false
+    }
+    
+    # Verificar que puede acceder a eventos de Windows
+    try {
+        $testProvider = Get-WinEvent -ListProvider "Microsoft-Windows-PowerShell" -ErrorAction SilentlyContinue
+        if (-not $testProvider) {
+            Write-Host "Advertencia: Acceso limitado a eventos. Considera ejecutar como Administrador" -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "Advertencia: No se puede acceder a eventos de Windows" -ForegroundColor Yellow
+    }
+    
+    # Verificar espacio en disco
+    $drive = Split-Path $PWD -Qualifier
+    $freeSpace = (Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='$drive'").FreeSpace
+    if ($freeSpace -lt 100MB) {
+        Write-Host "Advertencia: Poco espacio libre en disco (< 100MB)" -ForegroundColor Yellow
+    }
+    
+    Write-Host "   ✓ Validación completada" -ForegroundColor Green
+    return $true
+}
+
+# Ejecutar validaciones
+if (-not (Test-SystemRequirements)) {
+    exit 1
+}
 
 # Funcion para crear el servidor web
 function Create-WebServer {
@@ -266,14 +315,36 @@ function Create-WebInterface {
         .autocomplete-item:last-child { border-bottom: none; }
         .search-options { 
             display: flex; 
-            gap: 15px; 
+            gap: 20px; 
             align-items: center; 
             margin-bottom: 15px; 
             justify-content: center;
+            flex-wrap: wrap;
         }
         .checkbox-container { display: flex; align-items: center; gap: 8px; }
         .checkbox-container input[type="checkbox"] { width: 18px; height: 18px; }
         .checkbox-container label { font-size: 14px; color: var(--text-color); cursor: pointer; }
+        
+        /* Selectores en línea para PC */
+        .inline-filters {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-item label {
+            font-size: 14px;
+            color: var(--text-color);
+            white-space: nowrap;
+            font-weight: 500;
+        }
         
         /* Búsqueda avanzada colapsable */
         .advanced-search-toggle {
@@ -374,12 +445,18 @@ function Create-WebInterface {
         .results-count { margin-bottom: 15px; color: var(--text-color); font-style: italic; opacity: 0.8; }
         .filters { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-select { 
-            padding: 10px; 
+            padding: 10px 12px; 
             border: 2px solid var(--border-color); 
             border-radius: 6px; 
             font-size: 14px;
             background: var(--card-bg);
             color: var(--text-color);
+            min-width: 160px;
+            cursor: pointer;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #3498db;
         }
         
         /* Estilos para las tarjetas en grid */
@@ -565,6 +642,25 @@ function Create-WebInterface {
             .search-options {
                 justify-content: center;
                 text-align: center;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .inline-filters {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            
+            .filter-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+            
+            .filter-item label {
+                text-align: left;
+                font-size: 13px;
             }
             
             .stats { 
@@ -594,14 +690,14 @@ function Create-WebInterface {
             .stat-number { font-size: 1.8em; }
             
             .filters { 
-                flex-direction: column; 
-                gap: 10px;
+                display: none; /* Ocultar en móvil ya que están en línea arriba */
             }
             
             .filter-select {
                 width: 100%;
                 padding: 12px;
                 font-size: 16px;
+                min-width: unset;
             }
             
             .results-section { padding: 0 15px 20px 15px; }
@@ -756,10 +852,21 @@ function Create-WebInterface {
             
             .search-options {
                 margin-bottom: 10px;
+                flex-direction: column;
+                gap: 10px;
             }
             
-            .filters {
-                margin-bottom: 10px;
+            .inline-filters {
+                width: 100%;
+            }
+            
+            .filter-item {
+                width: 100%;
+            }
+            
+            .filter-select {
+                min-width: unset;
+                width: 100%;
             }
         }
         
@@ -777,6 +884,19 @@ function Create-WebInterface {
                 padding: 10px 12px;
                 font-size: 13px;
                 margin-bottom: 10px;
+            }
+            
+            .search-options {
+                gap: 8px;
+            }
+            
+            .filter-item label {
+                font-size: 12px;
+            }
+            
+            .filter-select {
+                padding: 8px 10px;
+                font-size: 14px;
             }
             
             .stats {
@@ -850,25 +970,31 @@ function Create-WebInterface {
                 <div class="search-options">
                     <div class="checkbox-container">
                         <input type="checkbox" id="exactIdSearch">
-                        <label for="exactIdSearch">Busqueda exacta de ID</label>
+                        <label for="exactIdSearch">Búsqueda exacta de ID</label>
+                    </div>
+                    <div class="inline-filters">
+                        <div class="filter-item">
+                            <label for="levelFilter">Nivel:</label>
+                            <select id="levelFilter" class="filter-select">
+                                <option value="">Todos los niveles</option>
+                                <option value="Information">Information</option>
+                                <option value="Warning">Warning</option>
+                                <option value="Error">Error</option>
+                                <option value="Critical">Critical</option>
+                                <option value="Verbose">Verbose</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="providerFilter">Proveedor:</label>
+                            <select id="providerFilter" class="filter-select">
+                                <option value="">Todos los proveedores</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="search-buttons">
                     <button class="btn btn-primary" onclick="searchEvents()">Buscar</button>
                     <button class="btn btn-secondary" onclick="clearSearch()">Limpiar</button>
-                </div>
-                <div class="filters">
-                    <select id="levelFilter" class="filter-select">
-                        <option value="">Todos los niveles</option>
-                        <option value="Information">Information</option>
-                        <option value="Warning">Warning</option>
-                        <option value="Error">Error</option>
-                        <option value="Critical">Critical</option>
-                        <option value="Verbose">Verbose</option>
-                    </select>
-                    <select id="providerFilter" class="filter-select">
-                        <option value="">Todos los proveedores</option>
-                    </select>
                 </div>
             </div>
             <div class="stats" id="stats">
@@ -1258,23 +1384,48 @@ function Create-WebInterface {
 
 # PASO 1: Crear directorios
 Write-Host "1. Creando estructura de directorios..." -ForegroundColor Green
-New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
-New-Item -ItemType Directory -Path $WebPath -Force | Out-Null
+
+# Crear directorios y convertir a rutas absolutas para evitar problemas
+try {
+    $OutputPath = (New-Item -ItemType Directory -Path $OutputPath -Force).FullName
+    $WebPath = (New-Item -ItemType Directory -Path $WebPath -Force).FullName
+    Write-Host "   • OutputPath: $OutputPath" -ForegroundColor Gray
+    Write-Host "   • WebPath: $WebPath" -ForegroundColor Gray
+}
+catch {
+    Write-Host "Error creando directorios: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 # PASO 2: Extraer datos de eventos
 Write-Host "2. Extrayendo datos de eventos de Windows..." -ForegroundColor Green
 $allEventsData = @()
-$providers = Get-WinEvent -ListProvider * 2>$null
 
-Write-Host "   Encontrados $($providers.Count) proveedores. Procesando..." -ForegroundColor Yellow
+try {
+    $providers = Get-WinEvent -ListProvider * 2>$null
+    Write-Host "   Encontrados $($providers.Count) proveedores. Procesando..." -ForegroundColor Yellow
+}
+catch {
+    Write-Host "Error obteniendo proveedores de eventos: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Verifica que tengas permisos suficientes o ejecuta como Administrador" -ForegroundColor Yellow
+    exit 1
+}
+
+if ($providers.Count -eq 0) {
+    Write-Host "No se encontraron proveedores de eventos. Verifica permisos." -ForegroundColor Red
+    exit 1
+}
 
 $counter = 0
+$errorCount = 0
+$successCount = 0
+
 foreach ($providerObj in $providers) {
     $counter++
     $provider = $providerObj.Name
     $safeFileName = $provider -replace '[\\/:*?"<>|]', '_'
     
-    Write-Progress -Activity "Procesando proveedores" -Status "Proveedor: $provider" -PercentComplete (($counter / $providers.Count) * 100)
+    Write-Progress -Activity "Procesando proveedores" -Status "Proveedor: $provider ($counter/$($providers.Count))" -PercentComplete (($counter / $providers.Count) * 100)
     
     try {
         $events = $providerObj.Events
@@ -1290,38 +1441,51 @@ foreach ($providerObj in $providers) {
                     Provider = $provider
                     EventId = $event.Id
                     Version = $event.Version
-                    Level = $event.Level.DisplayName
-                    Keywords = ($event.Keywords | ForEach-Object { $_.DisplayName }) -join ", "
-                    Description = $event.Description
-                    LogLinks = ($providerObj.LogLinks -join ", ")
+                    Level = if ($event.Level) { $event.Level.DisplayName } else { "Unknown" }
+                    Keywords = if ($event.Keywords) { ($event.Keywords | ForEach-Object { $_.DisplayName }) -join ", " } else { "" }
+                    Description = if ($event.Description) { $event.Description } else { "Sin descripción disponible" }
+                    LogLinks = if ($providerObj.LogLinks) { ($providerObj.LogLinks -join ", ") } else { "" }
                 }
                 
                 $allEventsData += $eventInfo
                 
                 $output += "Event ID: $($event.Id)"
                 $output += "Version: $($event.Version)"
-                $output += "Level: $($event.Level.DisplayName)"
-                $output += "Keywords: $(($event.Keywords | ForEach-Object { $_.DisplayName }) -join ', ')"
-                $output += "Description: $($event.Description)"
+                $output += "Level: $(if ($event.Level) { $event.Level.DisplayName } else { 'Unknown' })"
+                $output += "Keywords: $(if ($event.Keywords) { ($event.Keywords | ForEach-Object { $_.DisplayName }) -join ', ' } else { 'None' })"
+                $output += "Description: $(if ($event.Description) { $event.Description } else { 'Sin descripción disponible' })"
                 $output += "---"
             }
             
             $output | Out-File -FilePath "$OutputPath\$safeFileName.txt" -Encoding UTF8
+            $successCount++
         } else {
             $basicInfo = @()
             $basicInfo += "=== PROVIDER: $provider ==="
             $basicInfo += "Sin eventos especificos definidos"
-            $basicInfo += "LogLinks: $($providerObj.LogLinks -join ', ')"
+            $basicInfo += "LogLinks: $(if ($providerObj.LogLinks) { $providerObj.LogLinks -join ', ' } else { 'None' })"
             $basicInfo | Out-File -FilePath "$OutputPath\$safeFileName.txt" -Encoding UTF8
+            $successCount++
         }
     }
     catch {
+        $errorCount++
         Write-Warning "Error procesando $provider : $($_.Exception.Message)"
-        "Error processing $provider : $($_.Exception.Message)" | Out-File -FilePath "$OutputPath\$safeFileName.txt" -Encoding UTF8
+        try {
+            "Error processing $provider : $($_.Exception.Message)" | Out-File -FilePath "$OutputPath\ERROR_$safeFileName.txt" -Encoding UTF8
+        }
+        catch {
+            Write-Warning "No se pudo crear archivo de error para $provider"
+        }
     }
 }
 
 Write-Progress -Activity "Procesando proveedores" -Completed
+
+Write-Host "   ✓ Procesamiento completado:" -ForegroundColor Green
+Write-Host "     • Proveedores exitosos: $successCount" -ForegroundColor Gray
+Write-Host "     • Proveedores con errores: $errorCount" -ForegroundColor Gray
+Write-Host "     • Total eventos extraídos: $($allEventsData.Count)" -ForegroundColor Gray
 
 # PASO 3: Generar JSON para la web
 Write-Host "3. Generando archivo JSON para la web..." -ForegroundColor Green
@@ -1332,15 +1496,36 @@ $jsonData = @{
     events = $allEventsData
 }
 
-$jsonData | ConvertTo-Json -Depth 3 | Out-File -FilePath "$WebPath\events-data.json" -Encoding UTF8
+try {
+    $jsonData | ConvertTo-Json -Depth 3 | Out-File -FilePath "$WebPath\events-data.json" -Encoding UTF8
+    Write-Host "   • JSON generado exitosamente: $($allEventsData.Count) eventos" -ForegroundColor Gray
+}
+catch {
+    Write-Host "Error generando archivo JSON: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 # PASO 4: Crear interfaz web
 Write-Host "4. Creando interfaz web..." -ForegroundColor Green
-Create-WebInterface -WebPath $WebPath
+try {
+    Create-WebInterface -WebPath $WebPath
+    Write-Host "   • Interfaz HTML creada exitosamente" -ForegroundColor Gray
+}
+catch {
+    Write-Host "Error creando interfaz web: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 # PASO 5: Crear servidor web
 Write-Host "5. Creando servidor web..." -ForegroundColor Green
-Create-WebServer -WebPath $WebPath -ServerPort $Port
+try {
+    Create-WebServer -WebPath $WebPath -ServerPort $Port
+    Write-Host "   • Servidor PowerShell creado para puerto $Port" -ForegroundColor Gray
+}
+catch {
+    Write-Host "Error creando servidor web: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 # PASO 6: Mostrar resumen
 Write-Host ""
@@ -1350,17 +1535,19 @@ Write-Host "======================================================" -ForegroundC
 Write-Host ""
 Write-Host "ESTADISTICAS:" -ForegroundColor Cyan
 Write-Host "   • Total eventos procesados: $($allEventsData.Count)" -ForegroundColor White
-Write-Host "   • Total proveedores: $($providers.Count)" -ForegroundColor White
-Write-Host "   • Archivos individuales: $OutputPath\" -ForegroundColor White
+Write-Host "   • Total proveedores procesados: $($providers.Count)" -ForegroundColor White
+Write-Host "   • Proveedores exitosos: $successCount" -ForegroundColor White
+Write-Host "   • Proveedores con errores: $errorCount" -ForegroundColor White
+Write-Host "   • Archivos generados en: $OutputPath\" -ForegroundColor White
 Write-Host ""
 Write-Host "PARA INICIAR LA APLICACION WEB:" -ForegroundColor Cyan
-Write-Host "   1. Ejecuta: cd $WebPath" -ForegroundColor White
+Write-Host "   1. Ejecuta: cd `"$WebPath`"" -ForegroundColor White
 Write-Host "   2. Ejecuta: .\start-server.ps1" -ForegroundColor White
 Write-Host "   3. Abre tu navegador en: http://localhost:$Port" -ForegroundColor White
 Write-Host ""
 Write-Host "ESTRUCTURA DE ARCHIVOS:" -ForegroundColor Cyan
-Write-Host "   • Carpeta $WebPath\ contiene la aplicacion web completa" -ForegroundColor White
-Write-Host "   • El servidor sirve archivos desde la carpeta $WebPath\" -ForegroundColor White
+Write-Host "   • Carpeta `"$WebPath`" contiene la aplicacion web completa" -ForegroundColor White
+Write-Host "   • El servidor sirve archivos desde la carpeta web" -ForegroundColor White
 Write-Host "   • URL de acceso: http://localhost:$Port (redirige a index.html)" -ForegroundColor White
 Write-Host ""
 Write-Host "ARCHIVOS GENERADOS:" -ForegroundColor Cyan
@@ -1369,27 +1556,94 @@ Write-Host "   • $WebPath\events-data.json (Base de datos)" -ForegroundColor W
 Write-Host "   • $WebPath\start-server.ps1 (Servidor web)" -ForegroundColor White
 Write-Host "   • $OutputPath\ (Archivos por proveedor)" -ForegroundColor White
 
+if ($errorCount -gt 0) {
+    Write-Host ""
+    Write-Host "ADVERTENCIAS:" -ForegroundColor Yellow
+    Write-Host "   • $errorCount proveedores no pudieron procesarse completamente" -ForegroundColor White
+    Write-Host "   • Revisa los archivos ERROR_*.txt en $OutputPath\" -ForegroundColor White
+    Write-Host "   • Considera ejecutar como Administrador para acceso completo" -ForegroundColor White
+}
+
 # PASO 7: Auto-lanzar si se solicita
 if ($AutoOpen) {
     Write-Host ""
     Write-Host "Auto-lanzando aplicacion..." -ForegroundColor Yellow
     
-    Push-Location $WebPath
+    # Validar que la carpeta web existe y tiene archivos
+    $webIndexPath = Join-Path $WebPath "index.html"
+    $webServerPath = Join-Path $WebPath "start-server.ps1"
     
-    # Lanzar servidor en segundo plano
-    $job = Start-Job -ScriptBlock {
-        param($webPath, $serverPort)
-        Set-Location $webPath
-        & ".\start-server.ps1" -Port $serverPort
-    } -ArgumentList (Resolve-Path $WebPath).Path, $Port
+    if (-not (Test-Path $webIndexPath) -or -not (Test-Path $webServerPath)) {
+        Write-Host "Error: Archivos web no encontrados en $WebPath" -ForegroundColor Red
+        Write-Host "Verifica que el proceso de creación fue exitoso" -ForegroundColor Yellow
+        return
+    }
     
-    Start-Sleep 3
-    Start-Process "http://localhost:$Port"
-
-    Write-Host "Servidor ejecutandose (Job ID: $($job.Id))" -ForegroundColor Green
-    Write-Host "   Para detener: Stop-Job $($job.Id); Remove-Job $($job.Id)" -ForegroundColor Yellow
-    
-    Pop-Location
+    try {
+        # Validar que el puerto no esté en uso
+        $portInUse = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        if ($portInUse) {
+            Write-Host "Advertencia: Puerto $Port ya está en uso" -ForegroundColor Yellow
+            Write-Host "Intentando usar puerto alternativo..." -ForegroundColor Yellow
+            $Port = $Port + 1
+        }
+        
+        Push-Location $WebPath
+        
+        # Lanzar servidor en segundo plano con mejor manejo de errores
+        $job = Start-Job -ScriptBlock {
+            param($webPath, $serverPort)
+            try {
+                Set-Location $webPath
+                & ".\start-server.ps1" -Port $serverPort
+            }
+            catch {
+                Write-Error "Error iniciando servidor: $($_.Exception.Message)"
+            }
+        } -ArgumentList $WebPath, $Port
+        
+        # Esperar un poco más para asegurar que el servidor inicie
+        Start-Sleep 5
+        
+        # Validar que el servidor responde antes de abrir el navegador
+        $maxRetries = 3
+        $retryCount = 0
+        $serverReady = $false
+        
+        while ($retryCount -lt $maxRetries -and -not $serverReady) {
+            try {
+                $response = Invoke-WebRequest -Uri "http://localhost:$Port" -TimeoutSec 2 -ErrorAction SilentlyContinue
+                if ($response.StatusCode -eq 200) {
+                    $serverReady = $true
+                }
+            }
+            catch {
+                $retryCount++
+                Start-Sleep 2
+            }
+        }
+        
+        if ($serverReady) {
+            Start-Process "http://localhost:$Port"
+            Write-Host "Servidor ejecutandose exitosamente (Job ID: $($job.Id))" -ForegroundColor Green
+            Write-Host "   URL: http://localhost:$Port" -ForegroundColor Cyan
+            Write-Host "   Para detener: Stop-Job $($job.Id); Remove-Job $($job.Id)" -ForegroundColor Yellow
+        } else {
+            Write-Host "Advertencia: El servidor puede no estar respondiendo" -ForegroundColor Yellow
+            Write-Host "   Verifica manualmente: http://localhost:$Port" -ForegroundColor Cyan
+            Write-Host "   Job ID: $($job.Id)" -ForegroundColor Yellow
+        }
+        
+    }
+    catch {
+        Write-Host "Error durante el auto-lanzamiento: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Puedes iniciar manualmente:" -ForegroundColor Yellow
+        Write-Host "   1. cd $WebPath" -ForegroundColor White
+        Write-Host "   2. .\start-server.ps1 -Port $Port" -ForegroundColor White
+    }
+    finally {
+        Pop-Location
+    }
 }
 
 Write-Host ""

@@ -116,104 +116,106 @@ if (-not (Test-SystemRequirements)) {
 function Create-WebServer {
     param([string]$WebPath, [int]$ServerPort)
     
-    $serverScript = @"
+    $serverScript = @'
 # Servidor web con CORS habilitado para eventos de Windows
-param([int]`$Port = $ServerPort)
+param([int]$Port = __DEFAULT_PORT__)
 
 Add-Type -AssemblyName System.Net.Http
 
-`$listener = New-Object System.Net.HttpListener
-`$listener.Prefixes.Add("http://localhost:`$Port/")
-`$listener.Start()
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add("http://localhost:$Port/")
+$listener.Start()
 
-Write-Host "Servidor iniciado en http://localhost:`$Port" -ForegroundColor Green
-Write-Host "Sirviendo archivos desde: `$(Get-Location)" -ForegroundColor Cyan
+Write-Host "Servidor iniciado en http://localhost:$Port" -ForegroundColor Green
+Write-Host "Sirviendo archivos desde: $(Get-Location)" -ForegroundColor Cyan
 Write-Host "Presiona Ctrl+C para detener el servidor" -ForegroundColor Yellow
 Write-Host ""
 
 try {
-    while (`$listener.IsListening) {
-        `$context = `$listener.GetContext()
-        `$request = `$context.Request
-        `$response = `$context.Response
-        
+    while ($listener.IsListening) {
+        $context = $listener.GetContext()
+        $request = $context.Request
+        $response = $context.Response
+
         # Configurar headers CORS
-        `$response.Headers.Add("Access-Control-Allow-Origin", "*")
-        `$response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        `$response.Headers.Add("Access-Control-Allow-Headers", "Content-Type")
-        
-        `$path = `$request.Url.LocalPath
-        Write-Host "Solicitud: `$(`$request.HttpMethod) `$path" -ForegroundColor Gray
-        
+        $response.Headers.Add("Access-Control-Allow-Origin", "*")
+        $response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        $response.Headers.Add("Access-Control-Allow-Headers", "Content-Type")
+
+        $path = $request.Url.LocalPath
+        Write-Host "Solicitud: $($request.HttpMethod) $path" -ForegroundColor Gray
+
         # Manejar preflight OPTIONS
-        if (`$request.HttpMethod -eq "OPTIONS") {
-            `$response.StatusCode = 200
-            `$response.OutputStream.Close()
+        if ($request.HttpMethod -eq "OPTIONS") {
+            $response.StatusCode = 200
+            $response.OutputStream.Close()
             continue
         }
-        
+
         # Determinar archivo a servir
-        if (`$path -eq "/" -or `$path -eq "/index.html") {
-            `$filePath = "index.html"
-        } elseif (`$path -eq "/events-data.json") {
-            `$filePath = "events-data.json"
+        if ($path -eq "/" -or $path -eq "/index.html") {
+            $filePath = "index.html"
+        } elseif ($path -eq "/events-data.json") {
+            $filePath = "events-data.json"
         } else {
-            `$filePath = `$path.TrimStart('/')
+            $filePath = $path.TrimStart('/')
             # Evitar acceso a archivos fuera del directorio web
-            if (`$filePath.Contains("..") -or `$filePath.Contains(":")) {
-                `$filePath = "index.html"
+            if ($filePath.Contains("..") -or $filePath.Contains(":")) {
+                $filePath = "index.html"
             }
         }
-        
-        if (Test-Path `$filePath) {
+
+        if (Test-Path $filePath) {
             try {
-                `$content = Get-Content `$filePath -Raw -Encoding UTF8
-                `$buffer = [System.Text.Encoding]::UTF8.GetBytes(`$content)
-                
+                $content = Get-Content $filePath -Raw -Encoding UTF8
+                $buffer = [System.Text.Encoding]::UTF8.GetBytes($content)
+
                 # Establecer Content-Type apropiado
-                if (`$filePath.EndsWith(".html")) {
-                    `$response.ContentType = "text/html; charset=utf-8"
-                } elseif (`$filePath.EndsWith(".json")) {
-                    `$response.ContentType = "application/json; charset=utf-8"
-                } elseif (`$filePath.EndsWith(".js")) {
-                    `$response.ContentType = "text/javascript; charset=utf-8"
-                } elseif (`$filePath.EndsWith(".css")) {
-                    `$response.ContentType = "text/css; charset=utf-8"
+                if ($filePath.EndsWith(".html")) {
+                    $response.ContentType = "text/html; charset=utf-8"
+                } elseif ($filePath.EndsWith(".json")) {
+                    $response.ContentType = "application/json; charset=utf-8"
+                } elseif ($filePath.EndsWith(".js")) {
+                    $response.ContentType = "text/javascript; charset=utf-8"
+                } elseif ($filePath.EndsWith(".css")) {
+                    $response.ContentType = "text/css; charset=utf-8"
                 } else {
-                    `$response.ContentType = "text/plain; charset=utf-8"
+                    $response.ContentType = "text/plain; charset=utf-8"
                 }
-                
-                `$response.StatusCode = 200
-                `$response.ContentLength64 = `$buffer.Length
-                `$response.OutputStream.Write(`$buffer, 0, `$buffer.Length)
-                
-                Write-Host "Servido: `$filePath (`$(`$buffer.Length) bytes)" -ForegroundColor Green
+
+                $response.StatusCode = 200
+                $response.ContentLength64 = $buffer.Length
+                $response.OutputStream.Write($buffer, 0, $buffer.Length)
+
+                Write-Host "Servido: $filePath ($($buffer.Length) bytes)" -ForegroundColor Green
             }
             catch {
-                Write-Host "Error sirviendo `$filePath : `$(`$_.Exception.Message)" -ForegroundColor Red
-                `$response.StatusCode = 500
+                Write-Host "Error sirviendo $filePath : $($_.Exception.Message)" -ForegroundColor Red
+                $response.StatusCode = 500
             }
         } else {
-            `$notFound = "Archivo no encontrado: `$filePath"
-            `$buffer = [System.Text.Encoding]::UTF8.GetBytes(`$notFound)
-            `$response.StatusCode = 404
-            `$response.ContentType = "text/plain; charset=utf-8"
-            `$response.OutputStream.Write(`$buffer, 0, `$buffer.Length)
-            
-            Write-Host "No encontrado: `$filePath" -ForegroundColor Red
+            $notFound = "Archivo no encontrado: $filePath"
+            $buffer = [System.Text.Encoding]::UTF8.GetBytes($notFound)
+            $response.StatusCode = 404
+            $response.ContentType = "text/plain; charset=utf-8"
+            $response.OutputStream.Write($buffer, 0, $buffer.Length)
+
+            Write-Host "No encontrado: $filePath" -ForegroundColor Red
         }
-        
-        `$response.OutputStream.Close()
+
+        $response.OutputStream.Close()
     }
 }
 catch {
-    Write-Host "Error en el servidor: `$(`$_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Error en el servidor: $($_.Exception.Message)" -ForegroundColor Red
 }
 finally {
-    `$listener.Stop()
+    $listener.Stop()
     Write-Host "Servidor detenido" -ForegroundColor Yellow
 }
-"@
+'@
+
+    $serverScript = $serverScript -replace '__DEFAULT_PORT__', $ServerPort
     
     $serverScript | Out-File -FilePath "$WebPath\start-server.ps1" -Encoding UTF8
 }
